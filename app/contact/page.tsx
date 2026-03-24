@@ -9,6 +9,7 @@ import { submitContactMessage } from "@/lib/supabase";
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", phone: "", company: "", message: "" });
+  const [honeypot, setHoneypot] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
@@ -38,6 +39,16 @@ export default function ContactPage() {
     }
     setLoading(true);
     setError("");
+
+    // Spam honeypot check
+    if (honeypot) {
+      setTimeout(() => {
+        setSuccess(true);
+        setLoading(false);
+      }, 800);
+      return;
+    }
+
     try {
       await submitContactMessage({ name: form.name, email: form.email, company: form.company, message: `Phone: ${form.phone}\n\n${form.message}` });
       setSuccess(true);
@@ -143,6 +154,12 @@ export default function ContactPage() {
                 <div style={{ background: "#fff", borderRadius: "16px", padding: "36px", border: "1px solid #E2E8F0" }}>
                   <h3 className="font-serif font-bold mb-6" style={{ fontSize: "22px", color: "#0B1F2F" }}>Send a Message</h3>
                   <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+                    
+                    {/* Honeypot field (hidden) */}
+                    <div style={{ display: "none", position: "absolute", left: "-9999px" }} aria-hidden="true">
+                      <label>Don&apos;t fill this out if you&apos;re human: <input type="text" name="bot-field" value={honeypot} onChange={e => setHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" /></label>
+                    </div>
+
                     <div className="form-row-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                       <div>
                         <label className="font-sans" style={{ display: "block", fontSize: "10px", fontWeight: 600, color: "#0B1F2F", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "7px" }}>Name *</label>

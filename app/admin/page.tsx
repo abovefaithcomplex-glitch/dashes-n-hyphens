@@ -6,7 +6,7 @@ import {
   signIn, signOut, getSession,
   type StartupApplication, type ContactMessage
 } from "@/lib/supabase";
-import { LogOut, Users, Mail, BookOpen, Plus, Trash2, Edit3, Download, CheckCircle2, Loader2, X } from "lucide-react";
+import { LogOut, Users, Mail, BookOpen, Plus, Trash2, Edit3, Download, CheckCircle2, Loader2, X, FileDown } from "lucide-react";
 
 type Tab = "applications" | "messages";
 
@@ -99,6 +99,31 @@ export default function AdminPage() {
     setAuthenticated(false);
   };
 
+  const exportData = (filename: string, rows: any[]) => {
+    if (!rows || !rows.length) return;
+    const separator = ',';
+    const keys = Object.keys(rows[0]);
+    const csvContent =
+      keys.join(separator) +
+      '\n' +
+      rows.map(row => Object.keys(rows[0]).map(k => {
+          let cell = row[k] === null || row[k] === undefined ? '' : row[k];
+          cell = cell.toString().replace(/"/g, '""');
+          if (cell.search(/("|,|\n)/g) >= 0) cell = `"${cell}"`;
+          return cell;
+        }).join(separator)
+      ).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${filename}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (checking) return (
     <div style={{ minHeight: "100vh", background: "#0B1F2F", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <Loader2 size={28} className="animate-spin" style={{ color: "#4EC3C7" }} />
@@ -163,8 +188,11 @@ export default function AdminPage() {
               {/* Applications */}
               {tab === "applications" && (
                 <div>
-                  <div style={{ padding: "16px 24px", borderBottom: "1px solid #E2E8F0" }}>
+                  <div style={{ padding: "16px 24px", borderBottom: "1px solid #E2E8F0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <h2 className="font-serif" style={{ fontSize: 20, fontWeight: 700, color: "#0B1F2F" }}>Startup Applications</h2>
+                    <button onClick={() => exportData("startup_applications", applications)} disabled={applications.length === 0} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fff", border: "1px solid #E2E8F0", color: "#4A5568", borderRadius: 6, padding: "6px 12px", cursor: applications.length === 0 ? "not-allowed" : "pointer", fontSize: 12, fontWeight: 600, opacity: applications.length === 0 ? 0.5 : 1 }}>
+                      <FileDown size={14} /> Export CSV
+                    </button>
                   </div>
                   {applications.length === 0 ? (
                     <div style={{ textAlign: "center", padding: "60px 0", color: "#718096", fontSize: 14 }}>No applications yet. They will appear here once submitted.</div>
@@ -207,8 +235,11 @@ export default function AdminPage() {
               {/* Messages */}
               {tab === "messages" && (
                 <div>
-                  <div style={{ padding: "16px 24px", borderBottom: "1px solid #E2E8F0" }}>
+                  <div style={{ padding: "16px 24px", borderBottom: "1px solid #E2E8F0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <h2 className="font-serif" style={{ fontSize: 20, fontWeight: 700, color: "#0B1F2F" }}>Contact Messages</h2>
+                    <button onClick={() => exportData("contact_messages", messages)} disabled={messages.length === 0} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fff", border: "1px solid #E2E8F0", color: "#4A5568", borderRadius: 6, padding: "6px 12px", cursor: messages.length === 0 ? "not-allowed" : "pointer", fontSize: 12, fontWeight: 600, opacity: messages.length === 0 ? 0.5 : 1 }}>
+                      <FileDown size={14} /> Export CSV
+                    </button>
                   </div>
                   {messages.length === 0 ? (
                     <div style={{ textAlign: "center", padding: "60px 0", color: "#718096", fontSize: 14 }}>No messages yet. They will appear here once submitted.</div>

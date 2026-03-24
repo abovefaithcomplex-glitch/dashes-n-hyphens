@@ -16,6 +16,7 @@ export default function StartupFundingPage() {
     founder_name: "", startup_name: "", email: "", phone: "",
     sector: "", funding_stage: "", funding_required: "",
   });
+  const [honeypot, setHoneypot] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -27,7 +28,30 @@ export default function StartupFundingPage() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) setFile(e.target.files[0]);
+    setError("");
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      if (selectedFile.size > 20 * 1024 * 1024) {
+        setError("File size exceeds 20MB limit.");
+        setFile(null);
+        if (fileRef.current) fileRef.current.value = "";
+        return;
+      }
+      const allowedTypes = [
+        "application/pdf", 
+        "application/vnd.ms-powerpoint", 
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ];
+      if (!allowedTypes.includes(selectedFile.type) && !selectedFile.name.match(/\.(pdf|ppt|pptx|doc|docx)$/i)) {
+        setError("Invalid file type. Only PDF, PPT, and DOC are allowed.");
+        setFile(null);
+        if (fileRef.current) fileRef.current.value = "";
+        return;
+      }
+      setFile(selectedFile);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,6 +63,15 @@ export default function StartupFundingPage() {
     if (!form.founder_name || !form.startup_name || !form.email || !form.sector || !form.funding_stage || !form.funding_required) {
       setError("Please fill in all required fields.");
       setLoading(false);
+      return;
+    }
+
+    // Spam honeypot check
+    if (honeypot) {
+      setTimeout(() => {
+        setSuccess(true);
+        setLoading(false);
+      }, 1000);
       return;
     }
 
@@ -156,6 +189,12 @@ export default function StartupFundingPage() {
           ) : (
             <div className="bg-white rounded-2xl p-8 border border-[#E2E8F0]">
               <form onSubmit={handleSubmit} className="space-y-5">
+                
+                {/* Honeypot field (hidden) */}
+                <div style={{ display: "none", position: "absolute", left: "-9999px" }} aria-hidden="true">
+                  <label>Don&apos;t fill this out if you&apos;re human: <input type="text" name="bot-field" value={honeypot} onChange={e => setHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" /></label>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-[#0B1F2F] font-sans text-xs font-semibold tracking-wide uppercase mb-2">
@@ -280,7 +319,7 @@ export default function StartupFundingPage() {
                     <input
                       ref={fileRef}
                       type="file"
-                      accept=".pdf,.ppt,.pptx"
+                      accept=".pdf,.ppt,.pptx,.doc,.docx"
                       onChange={handleFileChange}
                       className="hidden"
                     />
@@ -293,7 +332,7 @@ export default function StartupFundingPage() {
                     ) : (
                       <div>
                         <p className="text-[#4A5568] font-sans text-sm">Click to upload pitch deck</p>
-                        <p className="text-[#CBD5E0] font-sans text-xs mt-1">PDF, PPT, PPTX up to 25MB</p>
+                        <p className="text-[#CBD5E0] font-sans text-xs mt-1">PDF, PPT/X, DOC/X up to 20MB</p>
                       </div>
                     )}
                   </div>
