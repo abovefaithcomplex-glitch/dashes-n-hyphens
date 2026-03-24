@@ -52,7 +52,7 @@ export interface BlogPost {
 export async function submitStartupApplication(data: Omit<StartupApplication, 'id' | 'created_at'>) {
   if (!supabase) return { result: null, error: null }
   try {
-    const { data: result, error } = await supabase.from('startup_applications').insert([data]).select()
+    const { data: result, error } = await supabase.from('startup_applications').insert([data])
     return { result, error }
   } catch { return { result: null, error: null } }
 }
@@ -68,7 +68,7 @@ export async function getStartupApplications() {
 export async function submitContactMessage(data: Omit<ContactMessage, 'id' | 'created_at'>) {
   if (!supabase) return { result: null, error: null }
   try {
-    const { data: result, error } = await supabase.from('contact_messages').insert([data]).select()
+    const { data: result, error } = await supabase.from('contact_messages').insert([data])
     return { result, error }
   } catch { return { result: null, error: null } }
 }
@@ -95,6 +95,14 @@ export async function getBlogPost(id: string) {
   if (!supabase) return { data: null, error: null }
   try {
     const { data, error } = await supabase.from('blog_posts').select('*').eq('id', id).single()
+    return { data, error }
+  } catch { return { data: null, error: null } }
+}
+
+export async function getBlogPostBySlug(slug: string) {
+  if (!supabase) return { data: null, error: null }
+  try {
+    const { data, error } = await supabase.from('blog_posts').select('*').eq('slug', slug).eq('published', true).single()
     return { data, error }
   } catch { return { data: null, error: null } }
 }
